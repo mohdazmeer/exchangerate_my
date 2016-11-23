@@ -47,9 +47,12 @@ function run(db) {
 		var currencies = [];
 		var rates = [];
 		
-		var currElement = $("#ui-accordion-accrates-panel-1 b").each(function () {
+		console.log("azmeer is here");
+		
+		var currElement = $("#ui-accordion-accrates-panel-1 b").each(function () {			
 			var value = $(this).text().trim();
 			currencies.push(value);
+			console.log(value);
 			//updateRow(db, value, 'xxx');
 		});
 
