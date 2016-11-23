@@ -8,22 +8,22 @@ function initDatabase(callback) {
 	// Set up sqlite database.
 	var db = new sqlite3.Database("data.sqlite");
 	db.serialize(function() {
-		db.run("CREATE TABLE IF NOT EXISTS data (name TEXT)");
+		db.run("CREATE TABLE IF NOT EXISTS data (currency TEXT, rate TEXT)");
 		callback(db);
 	});
 }
 
-function updateRow(db, value) {
+function updateRow(db, currency, rate) {
 	// Insert some data.
-	var statement = db.prepare("INSERT INTO data VALUES (?)");
-	statement.run(value);
+	var statement = db.prepare("INSERT INTO data VALUES (?, ?)");
+	statement.run([currency, rate]);
 	statement.finalize();
 }
 
 function readRows(db) {
 	// Read some data.
-	db.each("SELECT rowid AS id, name FROM data", function(err, row) {
-		console.log(row.id + ": " + row.name);
+	db.each("SELECT rowid AS id, currency, rate FROM data", function(err, row) {
+		console.log(row.id + " - " + row.currency + " : " + row.rate);
 	});
 }
 
@@ -41,15 +41,29 @@ function fetchPage(url, callback) {
 
 function run(db) {
 	// Use request to read in pages.
-	fetchPage("https://morph.io", function (body) {
+	fetchPage("http://www.exchangerate.my", function (body) {
 		// Use cheerio to find things in the page with css selectors.
 		var $ = cheerio.load(body);
-
-		var elements = $("div.media-body span.p-name").each(function () {
+		var currencies = [];
+		var rates = [];
+		
+		var currElement = $("#ui-accordion-accrates-panel-1 b").each(function () {
 			var value = $(this).text().trim();
-			updateRow(db, value);
+			currencies.push(value);
+			//updateRow(db, value, 'xxx');
 		});
 
+		var rateElement = $("tr+ tr td:nth-child(6)").each(function () {
+			var value = $(this).text().trim();
+			rates.push(value);
+			//updateRow(db, value, 'xxx');
+		});
+		
+		for (i = 0; i < currencies.length; i++) {
+		    console.log(currencies[i] + " : " + rates[i]);
+		    updateRow(db, currencies[i], rates[i]);
+		}
+		
 		readRows(db);
 
 		db.close();
